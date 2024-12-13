@@ -6,7 +6,7 @@ class LoopsService {
     this.client = new LoopsClient(apiKey);
   }
 
-  async sendEmail(summary, videoId) {
+  async sendEmail(summary, videoId, email) {
     try {
       logger.info('Attempting to send email via Loops...');
       logger.info('Summary:', summary);
@@ -22,7 +22,7 @@ class LoopsService {
       }
 
       await this.client.sendEvent({
-        email: 'lepadatu.mihail1@gmail.com',
+        email: email,
         eventName: 'crypto_analysis',
         eventProperties: {
           ...summaryObj,

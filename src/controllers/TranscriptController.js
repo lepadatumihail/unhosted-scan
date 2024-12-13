@@ -9,11 +9,11 @@ class TranscriptController {
 
   async getTranscript(req, res) {
     const { videoId } = req.params;
-    const { summary, format, sendEmail } = req.query;
+    const { summary, format, sendEmail, email } = req.query;
 
     try {
       const transcript = await this.youtubeService.getTranscript(videoId);
-      
+
       // Generate summary if requested
       let summaryData = null;
       let apiResponse = null;
@@ -26,17 +26,17 @@ class TranscriptController {
 
           // Send email if requested
           if (sendEmail === 'true') {
-            await this.loopsService.sendEmail(summaryData, videoId);
+            await this.loopsService.sendEmail(summaryData, videoId, email);
           }
         } catch (summaryError) {
           logger.error('Error generating summary:', summaryError);
           return res.status(500).json({
             error: 'Failed to generate summary',
-            details: summaryError.message
+            details: summaryError.message,
           });
         }
       }
-      
+
       // Handle different response formats
       if (format === 'markdown') {
         return res.send(summaryData);
@@ -45,7 +45,9 @@ class TranscriptController {
       if (format === 'html') {
         return res
           .type('html')
-          .send(`<pre style="font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; line-height: 1.6;">${summaryData}</pre>`);
+          .send(
+            `<pre style="font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; line-height: 1.6;">${summaryData}</pre>`
+          );
       }
 
       // Default JSON response
@@ -53,8 +55,11 @@ class TranscriptController {
         videoId,
         metadata: {
           totalEntries: transcript.length,
-          totalDuration: transcript.reduce((sum, entry) => sum + entry.duration, 0)
-        }
+          totalDuration: transcript.reduce(
+            (sum, entry) => sum + entry.duration,
+            0
+          ),
+        },
       };
 
       if (summaryData) {
@@ -63,33 +68,32 @@ class TranscriptController {
       }
 
       return res.json(response);
-
     } catch (error) {
       logger.error('Error processing request:', error);
 
       if (error.message === 'No captions available for this video') {
         return res.status(404).json({
-          error: 'No captions available for this video'
+          error: 'No captions available for this video',
         });
       }
 
       if (error.message === 'Failed to parse captions') {
         return res.status(500).json({
-          error: 'Failed to parse video captions'
+          error: 'Failed to parse video captions',
         });
       }
 
       if (error.message === 'Invalid YouTube video ID format') {
         return res.status(400).json({
-          error: 'Invalid YouTube video ID format'
+          error: 'Invalid YouTube video ID format',
         });
       }
 
       return res.status(500).json({
-        error: 'An error occurred while processing the request'
+        error: 'An error occurred while processing the request',
       });
     }
   }
 }
 
-export default TranscriptController; 
+export default TranscriptController;
