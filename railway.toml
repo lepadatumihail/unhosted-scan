@@ -1,10 +1,15 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "npm run build"
+# railway.toml
 
-[deploy]
-startCommand = "npm start"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3 
+[project]
+name = "my-express-app"
+
+[service]
+name = "server"
+# This command should run your Express server. 
+# Make sure it matches the "start" script in your package.json.
+start = "npm start"
+
+# If you need environment variables, you can define them here:
+# env = { 
+#   NODE_ENV = "production"
+# }
