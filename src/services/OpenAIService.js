@@ -5,46 +5,61 @@ class OpenAIService {
   constructor(apiKey) {
     this.client = new OpenAI({ apiKey });
   }
+  title;
+  overview;
+  marketUpdate;
+  technicalCorner;
+  projectSpotlight;
+  keyTakeaway;
+  disclaimer;
+  mentionedTokens;
 
   async generateSummary(transcript) {
     try {
       const fullText = transcript.map((entry) => entry.text).join(' ');
 
       const completion = await this.client.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
-            content: `You are a seasoned cryptocurrency expert analyst providing comprehensive video analysis. Break down the video content and provide a detailed, structured analysis in JSON format with the following sections:
+            content: `You are a seasoned cryptocurrency expert analyst providing a concise, yet comprehensive video analysis. Break down the video content and provide a structured analysis in JSON format with the following sections:
 
 {
-  "title": "Create a compelling and descriptive title with relevant emojis that accurately captures the video's main topic and key themes discussed",
-  "overview": "📝 Provide a comprehensive 2-3 sentence overview of the video's content, highlighting the main discussion points, key arguments presented, and any significant market predictions or analyses covered\\n",
-  "marketUpdate": "📊 Deliver a thorough analysis of the current market conditions discussed, including specific price movements, overall market sentiment, trading volume trends, and any correlations with macro events or other market factors. Include relevant statistics and data points mentioned\\n",
-  "featuredTokens": "🔥 Provide a detailed breakdown of each cryptocurrency discussed, including current price action, market cap, recent developments, potential catalysts, and the speaker's sentiment or predictions for each token. Include any specific price targets or technical levels mentioned\\n",
-  "technicalCorner": "📈 Break down the technical analysis presented in the video, including specific chart patterns, key support/resistance levels, trading indicators discussed, and any notable trend formations or potential breakout/breakdown points identified\\n",
-  "projectSpotlight": "💡 Provide an in-depth analysis of featured blockchain projects, including their technology stack, recent developments, partnerships, upcoming milestones, potential impact on the market, and any concerns or challenges discussed\\n",
-  "keyTakeaway": "🎯 Distill the most crucial insight, prediction, or strategic recommendation from the video, explaining why this particular point stands out and its potential impact on the market or investors\\n",
-  "disclaimer": "⚠️ This analysis is for informational purposes only and should not be considered as financial advice. Always conduct your own research and consult with financial professionals before making investment decisions."
+  "title": "🎯 <strong>Create a compelling and descriptive title with relevant emojis</strong>",
+  "overview": "📝 <strong>Overview:</strong> Provide a concise 2-3 sentence summary capturing the main points, arguments, and any significant predictions",
+  "marketUpdate": "📊 <strong>Market Update:</strong> Offer relevant data on price action, sentiment, or noteworthy market shifts in up to 4 sentences",
+  "technicalCorner": "📈 <strong>Technical Corner:</strong> Summarize chart patterns, indicators, or signals in up to 4 sentences",
+  "projectSpotlight": "💡 <strong>Project Spotlight:</strong> Provide an overview of newly introduced or spotlighted projects in up to 4 sentences",
+  "keyTakeaway": "🎯 <strong>Key Takeaway:</strong> Distill the main insight, key takeaways, or actionable advice in up to 4 sentences",
+  "disclaimer": "⚠️ <strong>Disclaimer:</strong> This analysis is for informational purposes only and should not be considered financial advice. Always do your own research.",
+  "mentionedTokens": "💎 <strong>Mentioned Tokens:</strong> Present each mentioned token as bullet points:\\n• BTC (🟢 Bullish): Short reason\\n• ETH (🔴 Bearish): Short reason\\nProvide a brief, one-sentence explanation for each sentiment. Each token should be on a new line."
 }
 
-IMPORTANT: Your response must be a valid JSON object containing exactly these keys. Each value should be a detailed string incorporating relevant emojis and clear, actionable explanations. Focus on accuracy and comprehensiveness while maintaining clarity.`,
+IMPORTANT: 
+1. Each section response MUST start with its corresponding emoji
+2. Provide your response as a raw JSON object without any markdown formatting or code blocks
+3. Do not mention the process of summarizing or referencing missing information
+4. Add subheadings in bold to make it more readable
+`,
           },
           {
             role: 'user',
-            content: `Analyze this cryptocurrency video transcript and provide a detailed breakdown in JSON format:\n\n${fullText}`,
+            content: `Analyze this cryptocurrency video transcript and provide a structured summary in JSON format:\n\n${fullText}`,
           },
         ],
-        max_tokens: 2000,
+        max_tokens: 3000,
         temperature: 0.3,
-        // response_format: { type: "json_object" }
+        response_format: { type: 'json_object' },
       });
 
       let formattedSummary;
       try {
         const content = completion.choices[0].message.content;
         logger.info('OpenAI response content:', content);
-        formattedSummary = JSON.parse(content);
+
+        const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+        formattedSummary = JSON.parse(cleanContent);
       } catch (parseError) {
         logger.error('Error parsing OpenAI response:', {
           error: parseError,
@@ -58,11 +73,10 @@ IMPORTANT: Your response must be a valid JSON object containing exactly these ke
         'title',
         'overview',
         'marketUpdate',
-        'featuredTokens',
         'technicalCorner',
         'projectSpotlight',
         'keyTakeaway',
-        'disclaimer'
+        'disclaimer',
       ];
 
       const missingKeys = requiredKeys.filter(

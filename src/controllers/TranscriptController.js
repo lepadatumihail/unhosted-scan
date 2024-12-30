@@ -1,10 +1,11 @@
 import logger from '../config/logger.js';
 
 class TranscriptController {
-  constructor(youtubeService, openaiService, loopsService) {
+  constructor(youtubeService, openaiService, loopsService, firebaseService) {
     this.youtubeService = youtubeService;
     this.openaiService = openaiService;
     this.loopsService = loopsService;
+    this.firebaseService = firebaseService;
   }
 
   async getTranscript(req, res) {
@@ -12,6 +13,19 @@ class TranscriptController {
     const { summary, format, sendEmail, email } = req.query;
 
     try {
+      // Check if summary already exists in Firestore
+      if (summary === 'true') {
+        const existingSummary = await this.firebaseService.getSummaryByVideoId(videoId);
+        if (existingSummary) {
+          logger.info('Found existing summary in Firestore');
+          return res.json({
+            videoId,
+            summary: existingSummary.summary,
+            fromCache: true
+          });
+        }
+      }
+
       const transcript = await this.youtubeService.getTranscript(videoId);
 
       // Generate summary if requested
@@ -23,6 +37,10 @@ class TranscriptController {
           summaryData = result.summary;
           apiResponse = result.apiResponse;
           logger.info('Summary generated successfully');
+
+          // Save summary to Firestore
+          await this.firebaseService.saveSummary(videoId, summaryData);
+          logger.info('Summary saved to Firestore');
 
           // Send email if requested
           if (sendEmail === 'true') {
