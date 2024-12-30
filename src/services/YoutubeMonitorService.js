@@ -172,7 +172,7 @@ class YoutubeMonitorService {
               item.snippet.thumbnails?.maxres?.url ||
               item.snippet.thumbnails?.high?.url ||
               item.snippet.thumbnails?.medium?.url ||
-              item.snippet.thumbnails?.default?.url, // Get best available thumbnail
+              item.snippet.thumbnails?.default?.url,
           };
 
           // Save to Firebase
