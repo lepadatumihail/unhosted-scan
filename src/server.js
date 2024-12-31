@@ -99,7 +99,7 @@ app.use((err, req, res, next) => {
 app.listen(port, '0.0.0.0', () => {
   logger.info(`Server is running on port ${port}`);
 
-  // Start monitoring YouTube channels (check every 15 minutes)
-  youtubeMonitor.startMonitoring(15);
+  // Start monitoring YouTube channels (check every  6 hours)
+  youtubeMonitor.startMonitoring(6 * 60);
   logger.info('YouTube channel monitoring started');
 });

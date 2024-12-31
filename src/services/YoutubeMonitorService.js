@@ -10,6 +10,7 @@ class YoutubeMonitorService {
     this.firebaseService = firebaseService;
     this.channels = [];
     this.initialized = false;
+    this.monitoringInterval = null;
   }
 
   async initialize() {
@@ -224,6 +225,11 @@ class YoutubeMonitorService {
 
   // Start monitoring with a specified interval (in minutes)
   startMonitoring(intervalMinutes = 360) {
+    // Clear any existing interval
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
+
     this.initialize()
       .then(async () => {
         // Run immediate first check
@@ -237,7 +243,7 @@ class YoutubeMonitorService {
         }
 
         // Start interval for subsequent checks
-        setInterval(() => {
+        this.monitoringInterval = setInterval(() => {
           for (const channel of this.channels) {
             this.checkNewVideosForChannel(channel.id).catch((error) =>
               logger.error(
@@ -249,7 +255,7 @@ class YoutubeMonitorService {
         }, intervalMinutes * 60 * 1000);
 
         logger.info(
-          `YouTube monitor started, checking every ${intervalMinutes} minute(s)`
+          `YouTube monitor started, checking every ${intervalMinutes} minutes`
         );
       })
       .catch((error) => {
