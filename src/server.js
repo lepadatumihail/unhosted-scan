@@ -7,6 +7,7 @@ import LoopsService from './services/LoopsService.js';
 import FirebaseService from './services/FirebaseService.js';
 import YoutubeMonitorService from './services/YoutubeMonitorService.js';
 import TranscriptController from './controllers/TranscriptController.js';
+import SubscriptionController from './controllers/SubscriptionController.js';
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +15,10 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Add body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Initialize services
 const youtubeService = new YoutubeService();
@@ -36,6 +41,9 @@ const transcriptController = new TranscriptController(
   loopsService,
   firebaseService
 );
+
+// Initialize controllers
+const subscriptionController = new SubscriptionController(firebaseService);
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
@@ -86,6 +94,11 @@ const handleChannelCheck = async (req, res) => {
 
 app.get('/check-channel/:channelId', handleChannelCheck);
 app.post('/check-channel/:channelId', handleChannelCheck);
+
+// Add subscription endpoint
+app.post('/subscribe', (req, res) => {
+  subscriptionController.addSubscriber(req, res);
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

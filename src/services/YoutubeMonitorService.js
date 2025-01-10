@@ -31,10 +31,10 @@ class YoutubeMonitorService {
         //   id: 'UCKc3w9FKFGdBR9PIkfngzPg',
         //   displayName: 'Shift',
         // },
-        {
-          id: 'UClgJyzwGs-GyaNxUHcLZrkg',
-          displayName: 'Invest Answers',
-        },
+        // {
+        //   id: 'UClgJyzwGs-GyaNxUHcLZrkg',
+        //   displayName: 'Invest Answers',
+        // },
         {
           id: 'UC_Wcg4f22Zhf2tU8oD-LK4w',
           displayName: 'Trader XO',
@@ -181,16 +181,25 @@ class YoutubeMonitorService {
             summaryData
           );
 
-          // Send email notification
-          if (process.env.NOTIFICATION_EMAIL) {
-            await this.loopsService.sendEmail(
-              summaryData,
-              videoId,
-              process.env.NOTIFICATION_EMAIL
-            );
+          // Get all email subscribers
+          const subscribers =
+            await this.firebaseService.getSummaryEmailSubscribers();
+
+          // Send email to all subscribers
+          if (subscribers.length > 0) {
+            for (const email of subscribers) {
+              try {
+                await this.loopsService.sendEmail(summaryData, videoId, email);
+                logger.info(`Notification sent to ${email}`);
+              } catch (emailError) {
+                logger.error(`Error sending email to ${email}:`, emailError);
+              }
+            }
             logger.info(
-              `Notification sent to ${process.env.NOTIFICATION_EMAIL}`
+              `Notifications sent to ${subscribers.length} subscribers`
             );
+          } else {
+            logger.info('No email subscribers found');
           }
 
           logger.info(`Successfully processed video ${videoId}`);
